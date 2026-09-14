@@ -13,7 +13,7 @@
 //   *.dc.html links                           -> clean URLs from pages.json
 //   cdn.prod.website-files.com/<id>/<file>    -> /assets/<file>  (self-hosted)
 
-import { readFileSync, writeFileSync, mkdirSync, readdirSync, copyFileSync, existsSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, copyFileSync, existsSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
@@ -161,6 +161,10 @@ ${footer}
 }
 
 /* ---------- build ----------------------------------------------------- */
+
+// Start from an empty dist, so a file that is no longer generated (a removed
+// page, a CNAME) can't survive from an earlier local build.
+rmSync(OUT, { recursive: true, force: true });
 
 function write(rel, content) {
   const path = join(OUT, rel);
