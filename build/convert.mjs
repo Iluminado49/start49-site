@@ -250,6 +250,10 @@ const FIELD_NAMES = new Map([
 function wireForm(html) {
   if (!html.includes('<form')) return html;
 
+  /* Give the contact block an anchor so the header CTA can reach it. */
+  html = html.replace(/<h2([^>]*)>(\s*CONTACT US\s*)<\/h2>/i,
+    (_, attrs, text) => `<h2 id="contact"${attrs}>${text}</h2>`);
+
   let out = html.replace(/<(input|select|textarea)([^>]*?)id="([^"]+)"([^>]*)>/gi,
     (full, tag, pre, id, post) => {
       const name = FIELD_NAMES.get(id);
@@ -270,6 +274,16 @@ function wireForm(html) {
     out = out.replace(/<form([^>]*)>/, `<form$1 data-mailto="${email}">`);
   }
   return out;
+}
+
+/* The header CTA opened the visitor's mail client. It should take them to
+   the contact form on the homepage instead - from any page, which is why
+   the href is written root-absolute here and made page-relative later. */
+function wireHeaderCta(html) {
+  return html.replace(
+    /href="mailto:hey@start49\.com\?subject=Let%27s%20talk"/gi,
+    'href="/#contact"'
+  );
 }
 
 /* ---------- page shell ------------------------------------------------ */
@@ -365,7 +379,7 @@ for (const page of cfg.pages) {
       .filter(Boolean)
       .map(s => `<style>${registerAssets(s)}</style>`)
       .join('\n'),
-    header: relink(clean(shellHeader.body)),
+    header: wireHeaderCta(relink(clean(shellHeader.body))),
     body,
     footer: relink(clean(shellFooter.body)),
   });
