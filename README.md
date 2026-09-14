@@ -86,8 +86,12 @@ Set it before launch.
 2. Set `site.formEndpoint`; test a submission.
 3. Push to `main`; check the Pages preview URL end to end, desktop and phone.
 4. Compare against the Webflow site page by page.
-5. Add `www.start49.com` as the custom domain in the repo's Pages settings
-   (the `CNAME` file is already in `static/`).
+5. Add `www.start49.com` as the custom domain in the repo's Pages settings.
+   Do this only when you are ready to cut over: setting it makes Pages serve
+   the site at that domain and redirect the `github.io` URL to it, so until
+   DNS points at GitHub the preview URL lands on the old Webflow site.
+   (A `CNAME` file in `static/` would set the domain automatically on every
+   deploy — deliberately not committed, for the same reason.)
 6. DNS: point `www` at the GitHub Pages target. **Also add the apex** —
    `start49.com` currently has no A record at all, so the bare domain does not
    resolve today. GitHub Pages apex A records:
