@@ -1,0 +1,73 @@
+{
+  "site": {
+    "origin": "https://www.start49.com",
+    "ga4": "G-TEWTMG75BJ",
+    "email": "hey@start49.com",
+    "formEndpoint": ""
+  },
+  "shell": {
+    "header": "SiteHeader.dc.html",
+    "footer": "SiteFooter.dc.html"
+  },
+  "pages": [
+    {
+      "src": "Home.dc.html",
+      "out": "",
+      "title": "Start49 | Software and Product Development Agency",
+      "description": "Start49 delivers a full-cycle service from scoping a viable feature set to implementing and launching products."
+    },
+    {
+      "src": "HowWeDo.dc.html",
+      "out": "how-we-do",
+      "title": "Workflow | We have defined goal-oriented workflows that bring results"
+    },
+    {
+      "src": "Services.dc.html",
+      "out": "services",
+      "title": "Services | We design and build software solutions"
+    },
+    {
+      "src": "WhyStart49.dc.html",
+      "out": "why-start49",
+      "title": "Why choose Start49 for your project?"
+    },
+    {
+      "src": "WhoWeAre.dc.html",
+      "out": "careers",
+      "title": "About Start49 | We're Hiring - Open Positions and Life Start49"
+    },
+    {
+      "src": "Blog.dc.html",
+      "out": "blog",
+      "title": "The Start49 Blog | Our Methodology, Processes, Values and Insights."
+    },
+    {
+      "src": "Post-HiringLandscape.dc.html",
+      "out": "blog/navigating-the-hiring-landscape-strategies-for-finding-top-software-developers-in-2023",
+      "title": "Navigating the Hiring Landscape: Strategies for Finding Top Software Developers in 2024"
+    },
+    {
+      "src": "Post-OperationalAnalytics.dc.html",
+      "out": "blog/unlocking-the-power-of-operational-analytics-harnessing-data-for-maximum-business-impact",
+      "title": "Unlocking the Power of Operational Analytics: Harnessing Data for Maximum Business Impact"
+    },
+    {
+      "src": "Post-Recap2023.dc.html",
+      "out": "blog/recap-of-2022-of-high-tech-industry-and-its-upcoming-challenges",
+      "title": "Recap of 2023 of high tech industry and it's upcoming challenges."
+    }
+  ],
+  "redirects": [
+    { "from": "workflow", "to": "/how-we-do/" },
+    { "from": "why-trust-universe49-with-your-project", "to": "/why-start49/" },
+    { "from": "the-universe49-blog-our-methodology-processes-values-and-insights", "to": "/blog/" }
+  ],
+  "gone": [
+    "contact-us-starting-a-project-with-universe49",
+    "careers/ios-developer",
+    "careers/backend-javascript-developer",
+    "careers/python-developer",
+    "careers/frontend-javascript-developer",
+    "careers/project-manager"
+  ]
+}

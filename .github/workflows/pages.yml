@@ -1,0 +1,63 @@
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Build site
+        run: node build/convert.mjs
+      - name: Check for unresolved design runtime
+        run: |
+          if grep -rlE 'style-hover=|<x-dc|support\.js|\{\{ ' dist/ ; then
+            echo "::error::Claude Design runtime leaked into the build output"
+            exit 1
+          fi
+          if grep -rl 'cdn.prod.website-files.com' dist/ ; then
+            echo "::error::Webflow CDN URLs still present — assets are not self-hosted"
+            exit 1
+          fi
+          if grep -rl 'PLACEHOLDER' src/ ; then
+            echo "::error::a placeholder artboard is still in src/"
+            exit 1
+          fi
+          missing=$(node -e "
+            const fs=require('fs');
+            const cfg=JSON.parse(fs.readFileSync('build/pages.json','utf8'));
+            const m=cfg.pages.filter(p=>!fs.existsSync('src/'+p.src)).map(p=>p.src);
+            if(m.length) console.log(m.join(' '));
+          ")
+          if [ -n "$missing" ]; then
+            echo "::error::missing artboards: $missing"
+            exit 1
+          fi
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
