@@ -8,9 +8,9 @@
    Build appends the generated hover rules to the end of this file. */
 
 :root {
-  --green: #08a202;
-  --green-dark: #057a01;
-  --ink: #212121;
+  --green: #08A202;
+  --green-dark: #057A01;
+  --ink: #1E201F;
 }
 
 * { box-sizing: border-box; }
@@ -28,7 +28,7 @@ body {
      colour; these are the fallbacks if one is ever missing. */
   background: #fff;
   color: var(--ink);
-  font-family: Poppins, system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: Archivo, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
 }

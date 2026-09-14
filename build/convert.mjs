@@ -141,6 +141,97 @@ function relativise(html, depth) {
     .replace(/url\((['"]?)\/(?!\/)([^'")]*)\1\)/g, (_, q, path) => `url(${q}${prefix}${path}${q})`);
 }
 
+/* ---------- brand normalisation ---------------------------------------
+   The nine artboards were designed across three visual systems: the
+   homepage and the shared header/footer in Poppins + Trump Gothic on
+   #08A202, seven pages in Archivo on #067802, and the blog index in
+   Archivo on an oklch blue. Since the header sits on every page, each
+   page was internally inconsistent too.
+
+   Rather than edit the design source - which stays the source of truth
+   and gets re-exported - the build normalises the output to one system:
+   Trump Gothic (the logo's own face) for display headings, Archivo for
+   everything else, one green, one ink, one page background. */
+
+const BRAND = {
+  green: '#08A202',        // the logo mark's green
+  greenDark: '#057A01',
+  ink: '#1E201F',          // the logo wordmark's near-black
+  paper: '#FBFBFA',
+};
+
+const COLOUR_MAP = new Map([
+  // greens from the Archivo pages -> the logo's green
+  ['#067802', BRAND.green],
+  ['#045701', BRAND.greenDark],
+  // inks -> one
+  ['#212121', BRAND.ink],
+  ['#14141c', BRAND.ink],
+  ['#2b2b2b', '#3A3D3B'],
+  // page backgrounds -> one
+  ['#fbfbfd', BRAND.paper],
+  ['#f7f7f7', '#F1F2F1'],
+  ['#f5f5f5', '#F1F2F1'],
+  // the blog index's blue accents -> brand green
+  ['oklch(0.54 0.19 248)', BRAND.green],
+  ['oklch(0.44 0.17 248)', BRAND.greenDark],
+  // its oklch neutrals -> the greys the other pages already use
+  ['oklch(0.45 0.015 260)', '#565A57'],
+  ['oklch(0.55 0.015 260)', '#6A6E6B'],
+  ['oklch(0.91 0.008 260)', '#E4E6E4'],
+]);
+
+/* Smallest font-size a heading can declare and still be treated as
+   display type. Below this the design uses headings as small uppercase
+   labels (13px section eyebrows, 16px card titles), where a condensed
+   face reads badly. */
+const DISPLAY_MIN_PX = 28;
+
+function headingSizePx(style) {
+  const m = /font-size:\s*clamp\(\s*([\d.]+)px/.exec(style) ||
+            /font-size:\s*([\d.]+)px/.exec(style);
+  return m ? parseFloat(m[1]) : 0;
+}
+
+function brandify(html) {
+  let out = html;
+
+  for (const [from, to] of COLOUR_MAP) {
+    out = out.split(from).join(to);
+    out = out.split(from.toUpperCase()).join(to);
+  }
+
+  // Body/UI face: Poppins and the Playfair pull-quote both become Archivo.
+  out = out
+    .replace(/font-family:\s*Poppins\s*,\s*sans-serif/gi, "font-family:Archivo,Helvetica,Arial,sans-serif")
+    .replace(/font-family:\s*'Playfair Display'\s*,\s*serif/gi, "font-family:Archivo,Helvetica,Arial,sans-serif");
+
+  /* Display face: headings at or above DISPLAY_MIN_PX get Trump Gothic -
+     except inside <article>, where a blog post's own title is long,
+     sentence-case running text and reads better in Archivo, matching how
+     the same titles are set on the blog index. */
+  const articles = [];
+  out = out.replace(/<article[\s\S]*?<\/article>/gi, m => {
+    articles.push(m);
+    return `\u0000ARTICLE${articles.length - 1}\u0000`;
+  });
+
+  out = out.replace(/<(h1|h2|h3)([^>]*?)style="([^"]*)"([^>]*)>/gi,
+    (full, tag, pre, style, post) => {
+      if (headingSizePx(style) < DISPLAY_MIN_PX) return full;
+      let st = style.includes('font-family:')
+        ? style.replace(/font-family:[^;]*/i, "font-family:'Trump Gothic',Archivo,sans-serif")
+        : `font-family:'Trump Gothic',Archivo,sans-serif;${style}`;
+      // Condensed faces do not want the design's negative tracking.
+      st = st.replace(/letter-spacing:\s*-[\d.]+em;?/gi, '');
+      return `<${tag}${pre}style="${st}"${post}>`;
+    });
+
+  out = out.replace(/\u0000ARTICLE(\d+)\u0000/g, (_, i) => articles[Number(i)]);
+
+  return out;
+}
+
 /* ---------- page shell ------------------------------------------------ */
 
 const { origin, ga4, email, formEndpoint } = cfg.site;
@@ -161,7 +252,7 @@ ${desc ? `<meta property="og:description" content="${desc}">\n` : ''}<meta prope
 <link rel="icon" href="/assets/favicon.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&family=Playfair+Display&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/site.css?v=__ASSETV__">
 ${head}
 <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4}"></script>
@@ -236,7 +327,7 @@ for (const page of cfg.pages) {
     body,
     footer: relink(clean(shellFooter.body)),
   });
-  pending.push({ rel: join(page.out, 'index.html'), html: relativise(html, depthOf(page.out)) });
+  pending.push({ rel: join(page.out, 'index.html'), html: relativise(brandify(html), depthOf(page.out)) });
 
   built.push({ loc: `${origin}${canonical}`, out: page.out });
 }
@@ -287,7 +378,7 @@ writeFileSync(
   join(OUT, 'site.css'),
   readFileSync(join(ROOT, 'static/site.css'), 'utf8') +
     `\n/* ---- hover states lifted from style-hover attributes ---- */\n` +
-    hoverRules.join('\n') + '\n'
+    brandify(hoverRules.join('\n')) + '\n'
 );
 
 /* Fingerprint the shared assets and flush the buffered pages.
