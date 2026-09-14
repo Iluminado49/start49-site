@@ -232,9 +232,49 @@ function brandify(html) {
   return out;
 }
 
+/* ---------- contact form ----------------------------------------------
+   The artboard's inputs carry an id but no name, and a form backend reads
+   name - a POST would arrive empty. Names are added here, mapped to the
+   field names Web3Forms puts in the notification email.
+
+   With no access key configured the form falls back to composing a
+   mailto:, which is what the design's own prototype handler did. */
+
+const FIELD_NAMES = new Map([
+  ['full-name', 'name'],
+  ['email', 'email'],
+  ['budget', 'budget'],
+  ['brief', 'message'],
+]);
+
+function wireForm(html) {
+  if (!html.includes('<form')) return html;
+
+  let out = html.replace(/<(input|select|textarea)([^>]*?)id="([^"]+)"([^>]*)>/gi,
+    (full, tag, pre, id, post) => {
+      const name = FIELD_NAMES.get(id);
+      if (!name || /\sname=/.test(full)) return full;
+      return `<${tag}${pre}id="${id}" name="${name}"${post}>`;
+    });
+
+  if (formEndpoint && formAccessKey) {
+    const hidden = [
+      `<input type="hidden" name="access_key" value="${formAccessKey}">`,
+      `<input type="hidden" name="subject" value="New enquiry from start49.com">`,
+      `<input type="hidden" name="from_name" value="start49.com">`,
+      // Web3Forms' honeypot: bots tick it, people never see it.
+      `<input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off">`,
+    ].join('\n');
+    out = out.replace(/<form([^>]*)>/, `<form$1 action="${formEndpoint}" method="POST">\n${hidden}`);
+  } else {
+    out = out.replace(/<form([^>]*)>/, `<form$1 data-mailto="${email}">`);
+  }
+  return out;
+}
+
 /* ---------- page shell ------------------------------------------------ */
 
-const { origin, ga4, email, formEndpoint } = cfg.site;
+const { origin, ga4, email, formEndpoint, formAccessKey } = cfg.site;
 
 function document_({ title, desc, canonical, head, header, body, footer }) {
   return `<!DOCTYPE html>
@@ -275,7 +315,14 @@ ${footer}
 
 // Start from an empty dist, so a file that is no longer generated (a removed
 // page, a CNAME) can't survive from an earlier local build.
-rmSync(OUT, { recursive: true, force: true });
+try {
+  rmSync(OUT, { recursive: true, force: true });
+} catch (err) {
+  // Some sandboxes mount the working tree without delete permission. CI
+  // always builds from a fresh checkout, so a stale dist only ever affects
+  // a local preview - warn rather than fail the build.
+  console.warn(`could not clear ${OUT} (${err.code}); output may contain stale files`);
+}
 
 function write(rel, content) {
   const path = join(OUT, rel);
@@ -308,12 +355,7 @@ for (const page of cfg.pages) {
   inner = inner.split(HEADER).pop();
   inner = inner.split(FOOTER)[0];
 
-  let body = relink(clean(inner));
-  if (formEndpoint) {
-    body = body.replace(/<form([^>]*)>/, `<form$1 action="${formEndpoint}" method="POST">`);
-  } else {
-    body = body.replace(/<form([^>]*)>/, `<form$1 data-mailto="${email}">`);
-  }
+  let body = wireForm(relink(clean(inner)));
 
   const html = document_({
     title: page.title || p.title || 'Start49',

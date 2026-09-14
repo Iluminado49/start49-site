@@ -3,7 +3,8 @@
     "origin": "https://www.start49.com",
     "ga4": "G-TEWTMG75BJ",
     "email": "hey@start49.com",
-    "formEndpoint": ""
+    "formEndpoint": "https://api.web3forms.com/submit",
+    "formAccessKey": ""
   },
   "shell": {
     "header": "SiteHeader.dc.html",
@@ -58,9 +59,18 @@
     }
   ],
   "redirects": [
-    { "from": "workflow", "to": "/how-we-do/" },
-    { "from": "why-trust-universe49-with-your-project", "to": "/why-start49/" },
-    { "from": "the-universe49-blog-our-methodology-processes-values-and-insights", "to": "/blog/" }
+    {
+      "from": "workflow",
+      "to": "/how-we-do/"
+    },
+    {
+      "from": "why-trust-universe49-with-your-project",
+      "to": "/why-start49/"
+    },
+    {
+      "from": "the-universe49-blog-our-methodology-processes-values-and-insights",
+      "to": "/blog/"
+    }
   ],
   "gone": [
     "contact-us-starting-a-project-with-universe49",

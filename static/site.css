@@ -150,3 +150,12 @@ main > div[style*="background-position:50% 60%"] {
     font-size: 18px !important;
   }
 }
+
+/* Web3Forms honeypot - visible only to bots. */
+.hp {
+  position: absolute !important;
+  left: -9999px !important;
+  opacity: 0 !important;
+  height: 0 !important;
+  width: 0 !important;
+}
