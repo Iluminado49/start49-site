@@ -15,6 +15,7 @@
 
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, copyFileSync, existsSync, rmSync } from 'node:fs';
 import { join, dirname } from 'node:path';
+import { createHash } from 'node:crypto';
 
 const ROOT = new URL('..', import.meta.url).pathname.replace(/\/$/, '');
 const SRC = join(ROOT, 'src');
@@ -161,7 +162,7 @@ ${desc ? `<meta property="og:description" content="${desc}">\n` : ''}<meta prope
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&family=Playfair+Display&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/site.css">
+<link rel="stylesheet" href="/site.css?v=__ASSETV__">
 ${head}
 <script async src="https://www.googletagmanager.com/gtag/js?id=${ga4}"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','${ga4}');</script>
@@ -173,7 +174,7 @@ ${header}
 ${body}
 </main>
 ${footer}
-<script src="/site.js" defer></script>
+<script src="/site.js?v=__ASSETV__" defer></script>
 </body>
 </html>
 `;
@@ -195,6 +196,7 @@ const shellHeader = parse(cfg.shell.header);
 const shellFooter = parse(cfg.shell.footer);
 
 const built = [];
+const pending = [];   // pages held back until the asset hash is known
 
 for (const page of cfg.pages) {
   if (!existsSync(join(SRC, page.src))) {
@@ -234,7 +236,7 @@ for (const page of cfg.pages) {
     body,
     footer: relink(clean(shellFooter.body)),
   });
-  write(join(page.out, 'index.html'), relativise(html, depthOf(page.out)));
+  pending.push({ rel: join(page.out, 'index.html'), html: relativise(html, depthOf(page.out)) });
 
   built.push({ loc: `${origin}${canonical}`, out: page.out });
 }
@@ -287,6 +289,22 @@ writeFileSync(
     `\n/* ---- hover states lifted from style-hover attributes ---- */\n` +
     hoverRules.join('\n') + '\n'
 );
+
+/* Fingerprint the shared assets and flush the buffered pages.
+
+   GitHub Pages serves site.css and site.js with a ten-minute cache, so
+   without this a deploy leaves returning visitors on the old stylesheet
+   with no way to tell. The query string changes whenever the bytes do. */
+const assetHash = createHash('sha256')
+  .update(readFileSync(join(OUT, 'site.css')))
+  .update(readFileSync(join(OUT, 'site.js')))
+  .digest('hex')
+  .slice(0, 8);
+
+for (const { rel, html } of pending) {
+  write(rel, html.split('__ASSETV__').join(assetHash));
+}
+console.log(`assetv:    ${assetHash}`);
 
 /* asset manifest for the downloader */
 writeFileSync(
