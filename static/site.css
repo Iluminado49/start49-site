@@ -71,3 +71,82 @@ img, svg, video { max-width: 100%; }
 @media print {
   [data-site-header] { position: static !important; }
 }
+
+/* ---------------------------------------------------------------------
+   Header on phones.
+
+   The header is position:fixed. Below ~768px the nav wraps to two rows
+   and the bar grows to 157px tall, which covered the top of every page -
+   the homepage headline sat entirely behind it. Sticky gives the same
+   stick-on-scroll behaviour while letting the bar occupy its own space,
+   so no page needs a magic top padding. Desktop keeps the design's
+   translucent overlay.
+   --------------------------------------------------------------------- */
+
+@media (max-width: 767px) {
+  [data-site-header] {
+    position: sticky !important;
+    top: 0;
+  }
+}
+
+/* ---------------------------------------------------------------------
+   Homepage hero.
+
+   The design lays the headline and lead paragraph directly over a
+   full-bleed background illustration: `cover` at 50% 60%, a 100vh floor,
+   a left margin and no right one. On the deployed site the text crossed
+   the artwork at 375px, 768px and 1280px, and both the headline and the
+   paragraph ended exactly on the viewport edge on a phone.
+
+   These rules give the illustration space of its own rather than
+   restyling it: stacked below the copy on phones, beside it from tablet
+   up. The selector matches the hero's own inline background-position, so
+   it applies to that block and nothing else on the site.
+   --------------------------------------------------------------------- */
+
+main > div[style*="background-position:50% 60%"] {
+  background-repeat: no-repeat !important;
+  padding-right: clamp(20px, 5vw, 60px) !important;
+  /* was min-height:100vh - at 1280x800 that left the lower 60% empty */
+  min-height: clamp(520px, 78vh, 780px) !important;
+}
+
+/* Phones: copy first, artwork beneath it. */
+@media (max-width: 767px) {
+  main > div[style*="background-position:50% 60%"] {
+    min-height: auto !important;
+    justify-content: flex-start !important;
+    background-size: 82% auto !important;
+    background-position: 50% 100% !important;
+    padding-top: 40px !important;
+    padding-bottom: min(80vw, 340px) !important;
+  }
+  /* The design's 48px floor stopped the headline shrinking below ~650px,
+     which is what pushed "DEVELOPMENT" past the edge of the screen. */
+  main > div[style*="background-position:50% 60%"] > h1 {
+    font-size: clamp(32px, 9vw, 56px) !important;
+  }
+}
+
+/* Tablet and up: artwork to the right, copy held clear of it. */
+@media (min-width: 768px) {
+  main > div[style*="background-position:50% 60%"] {
+    background-size: auto 72% !important;
+    background-position: 94% 58% !important;
+  }
+  main > div[style*="background-position:50% 60%"] > h1,
+  main > div[style*="background-position:50% 60%"] > p {
+    max-width: min(56%, 720px) !important;
+  }
+}
+
+/* Tablet only: at 768px the headline still reached into the artwork. */
+@media (min-width: 768px) and (max-width: 1023px) {
+  main > div[style*="background-position:50% 60%"] > h1 {
+    font-size: clamp(34px, 5.4vw, 52px) !important;
+  }
+  main > div[style*="background-position:50% 60%"] > p {
+    font-size: 18px !important;
+  }
+}
