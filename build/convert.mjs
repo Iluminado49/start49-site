@@ -121,6 +121,25 @@ function relink(html) {
   );
 }
 
+/* ---------- root-absolute -> page-relative ----------------------------
+   The site must work both at a domain root (www.start49.com) and inside a
+   subfolder (iluminado49.github.io/start49-site/). Absolute "/x" paths only
+   work in the first case, so every internal URL is rewritten relative to the
+   page's own depth. */
+
+function depthOf(out) {
+  return out === '' ? 0 : out.split('/').length;
+}
+
+function relativise(html, depth) {
+  const prefix = depth === 0 ? '' : '../'.repeat(depth);
+  return html
+    // href="/..." and src="/..."  (but not "//host" protocol-relative)
+    .replace(/(href|src)="\/(?!\/)([^"]*)"/g, (_, a, path) => `${a}="${prefix}${path || './'}"`)
+    // url(/...), url('/...'), url("/...") inside style attributes and <style>
+    .replace(/url\((['"]?)\/(?!\/)([^'")]*)\1\)/g, (_, q, path) => `url(${q}${prefix}${path}${q})`);
+}
+
 /* ---------- page shell ------------------------------------------------ */
 
 const { origin, ga4, email, formEndpoint } = cfg.site;
@@ -203,7 +222,7 @@ for (const page of cfg.pages) {
     body = body.replace(/<form([^>]*)>/, `<form$1 data-mailto="${email}">`);
   }
 
-  write(join(page.out, 'index.html'), document_({
+  const html = document_({
     title: page.title || p.title || 'Start49',
     desc: page.description || p.desc || '',
     canonical,
@@ -214,14 +233,15 @@ for (const page of cfg.pages) {
     header: relink(clean(shellHeader.body)),
     body,
     footer: relink(clean(shellFooter.body)),
-  }));
+  });
+  write(join(page.out, 'index.html'), relativise(html, depthOf(page.out)));
 
   built.push({ loc: `${origin}${canonical}`, out: page.out });
 }
 
 /* redirect stubs (GitHub Pages has no server-side redirects) */
 for (const r of cfg.redirects) {
-  write(join(r.from, 'index.html'), `<!DOCTYPE html>
+  write(join(r.from, 'index.html'), relativise(`<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -231,10 +251,10 @@ for (const r of cfg.redirects) {
 <meta name="robots" content="noindex">
 </head>
 <body><p>This page moved to <a href="${r.to}">${origin}${r.to}</a>.</p>
-<script>location.replace('${r.to}');</script>
+<script>location.replace(new URL('${r.to}'.replace(/^\//, '../'), location.href).pathname);</script>
 </body>
 </html>
-`);
+`, depthOf(r.from)));
 }
 
 /* sitemap + robots */
