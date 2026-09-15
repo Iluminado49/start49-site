@@ -47,6 +47,13 @@ function localName(remoteFile) {
   return `${base}${ext}`;
 }
 
+/* Assets replaced with a better original after the design was exported.
+   The hero was a 214KB PNG that rendered at 0.37x its native size; this
+   is the same artwork as vector - 51KB, crisp at any size. */
+const ASSET_OVERRIDES = new Map([
+  ['group-43.png', 'hero.svg'],
+]);
+
 function registerAssets(html) {
   return html.replace(ASSET_RE, (full, file) => {
     if (!assets.has(full)) {
@@ -63,7 +70,7 @@ function registerAssets(html) {
         } while (taken.has(`/assets/${candidate}`));
         name = candidate;
       }
-      assets.set(full, `/assets/${name}`);
+      assets.set(full, `/assets/${ASSET_OVERRIDES.get(name) || name}`);
     }
     return assets.get(full);
   });
@@ -454,9 +461,17 @@ for (const { rel, html } of pending) {
 console.log(`assetv:    ${assetHash}`);
 
 /* asset manifest for the downloader */
+/* Overridden assets are checked in, not downloaded - without this filter
+   fetch-assets.sh would pull the original from the CDN and write it over
+   the replacement, under the replacement's name. */
+const overridden = new Set(ASSET_OVERRIDES.values());
 writeFileSync(
   join(ROOT, 'build/assets.tsv'),
-  [...assets].map(([remote, local]) => `${remote}\t${local.replace('/assets/', '')}`).join('\n') + '\n'
+  [...assets]
+    .map(([remote, local]) => [remote, local.replace('/assets/', '')])
+    .filter(([, local]) => !overridden.has(local))
+    .map(([remote, local]) => `${remote}\t${local}`)
+    .join('\n') + '\n'
 );
 
 console.log(`pages:     ${built.length}`);
