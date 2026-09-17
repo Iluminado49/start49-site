@@ -21,7 +21,9 @@ wildcard ever issued. Every other common subdomain (mail, blog, app, api, jira,
 crm, dev, staging, portal, docs, autodiscover, ftp, careers, cdn) returns
 NXDOMAIN - they do not exist in the zone.
 
-The zone contains exactly four record sets:
+The zone contains exactly five record sets. (The `_webflow` verification TXT
+was found by Cloudflare's zone scan - it cannot be discovered by guessing
+names from outside. It becomes dead weight once Webflow is cancelled.)
 
     start49.com.                  MX    1  aspmx.l.google.com.
                                         5  alt1.aspmx.l.google.com.
@@ -33,6 +35,8 @@ The zone contains exactly four record sets:
     start49.com.                  TXT   atlassian-domain-verification=iANx4sbzjtrMN6hCGTxX8Anyf34aUQsF8catj73hOKeAPr7BtBvsI8Rx00WzweFR
 
     google._domainkey.start49.com. TXT  v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIAoGrLgc/3dwgVjdQXFjtWDLWiesPs2PkUedgeBVDRBXCSgRjsNjRJEBqEJCC4B4EPsWXRHDlRfbE/KfgM+F4W9l51qXKhCxAd3I2CyDeqO2VLMHvOwt/X149l4pa4K+W8JV8tTni+7yKYLLvmfQGzEP0kSVF10byi+iwBAdWIQIDAQAB
+
+    _webflow.start49.com.         TXT   one-time-verification=ea655b74-bbc8-4efa-bc2c-3ea602036f20
 
     www.start49.com.              CNAME proxy-ssl.webflow.com.   TTL 300
 
@@ -47,6 +51,23 @@ Notes:
 
 Mail is Google Workspace. The MX records and both TXT records must survive the
 move exactly as written above, or hey@start49.com breaks.
+
+## New DNS home: Cloudflare (free plan)
+
+The AWS account holding the Route 53 zone is not accessible to anyone at
+Start49, so DNS moves to a Cloudflare account under alik.yerevan@gmail.com.
+The full zone was rebuilt at Cloudflare and verified record-for-record against
+the inventory above BEFORE any nameserver change, so there is no window in
+which mail has nowhere to go.
+
+All records are set to **DNS only** (grey cloud), not proxied - Webflow's
+`proxy-ssl` endpoint and GitHub Pages certificate issuance both want direct
+DNS.
+
+Cloudflare nameservers assigned to this zone:
+
+    anahi.ns.cloudflare.com
+    rohin.ns.cloudflare.com
 
 ## Changes to make
 
