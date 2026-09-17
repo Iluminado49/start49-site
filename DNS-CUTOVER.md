@@ -13,21 +13,42 @@ Namecheap shows NAMESERVERS = "Custom DNS" pointing at **AWS Route 53**:
 So every record below is edited in the **Route 53 hosted zone for start49.com**,
 not in Namecheap's Advanced DNS tab.
 
-## Live zone snapshot (before cutover)
+## Complete zone inventory (verified 2026-09-17)
 
-    start49.com.      A      (none - apex has no address record)
-    www.start49.com.  CNAME  proxy-ssl.webflow.com.        TTL 300
-    start49.com.      MX     1  aspmx.l.google.com.
-                             5  alt1.aspmx.l.google.com.
-                             5  alt2.aspmx.l.google.com.
-                             10 alt3.aspmx.l.google.com.
-                             10 alt4.aspmx.l.google.com.
-                             15 jp7cw6w77i76ydnoa7tc2tqyo4uxeag5mbqx3ecmy3tmi5lrofpq.mx-verification.google.com.
-    start49.com.      TXT    atlassian-domain-verification=iANx4sbzjtrMN6hCGTxX8Anyf34aUQsF8catj73hOKeAPr7BtBvsI8Rx00WzweFR
+Enumerated by direct DNS queries plus certificate-transparency history.
+Certificate transparency shows only `start49.com`, `www.start49.com` and a
+wildcard ever issued. Every other common subdomain (mail, blog, app, api, jira,
+crm, dev, staging, portal, docs, autodiscover, ftp, careers, cdn) returns
+NXDOMAIN - they do not exist in the zone.
 
-Mail is Google Workspace. **Do not touch MX or TXT** - hey@start49.com breaks if you do.
+The zone contains exactly four record sets:
 
-## Changes to make in Route 53
+    start49.com.                  MX    1  aspmx.l.google.com.
+                                        5  alt1.aspmx.l.google.com.
+                                        5  alt2.aspmx.l.google.com.
+                                        10 alt3.aspmx.l.google.com.
+                                        10 alt4.aspmx.l.google.com.
+                                        15 jp7cw6w77i76ydnoa7tc2tqyo4uxeag5mbqx3ecmy3tmi5lrofpq.mx-verification.google.com.
+
+    start49.com.                  TXT   atlassian-domain-verification=iANx4sbzjtrMN6hCGTxX8Anyf34aUQsF8catj73hOKeAPr7BtBvsI8Rx00WzweFR
+
+    google._domainkey.start49.com. TXT  v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCIAoGrLgc/3dwgVjdQXFjtWDLWiesPs2PkUedgeBVDRBXCSgRjsNjRJEBqEJCC4B4EPsWXRHDlRfbE/KfgM+F4W9l51qXKhCxAd3I2CyDeqO2VLMHvOwt/X149l4pa4K+W8JV8tTni+7yKYLLvmfQGzEP0kSVF10byi+iwBAdWIQIDAQAB
+
+    www.start49.com.              CNAME proxy-ssl.webflow.com.   TTL 300
+
+Notes:
+- The apex has **no** A record. `http://start49.com` does not resolve today;
+  only `www` works.
+- There is **no SPF record** and **no DMARC record**. Mail is Google Workspace
+  with DKIM signing only. Worth adding SPF + DMARC once DNS is somewhere we
+  control, but that is a separate job from this cutover.
+- There is no CAA record, so any CA may issue - GitHub Pages certificates
+  will work without changes.
+
+Mail is Google Workspace. The MX records and both TXT records must survive the
+move exactly as written above, or hey@start49.com breaks.
+
+## Changes to make
 
 1. Create record, name blank (apex `start49.com`), type **A**, TTL 3600, four values:
 
