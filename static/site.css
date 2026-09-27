@@ -61,7 +61,7 @@ img, svg, video { max-width: 100%; }
 
 .nav-toggle { display: none; }
 
-@media (max-width: 767px) {
+@media (max-width: 959px) {
   html { scroll-padding-top: 90px; }
 
   .nav-toggle {
@@ -144,7 +144,7 @@ img, svg, video { max-width: 100%; }
    translucent overlay.
    --------------------------------------------------------------------- */
 
-@media (max-width: 767px) {
+@media (max-width: 959px) {
   [data-site-header] {
     position: sticky !important;
     top: 0;
@@ -173,15 +173,18 @@ main > div[style*="background-position:50% 60%"] {
   min-height: clamp(520px, 78vh, 780px) !important;
 }
 
-/* Phones: copy first, artwork beneath it. */
-@media (max-width: 767px) {
+/* Phones and small tablets: copy first, artwork beneath it. */
+@media (max-width: 899px) {
   main > div[style*="background-position:50% 60%"] {
     min-height: auto !important;
     justify-content: flex-start !important;
-    background-size: 82% auto !important;
+    /* Full-bleed artwork. hero.svg is cropped to its visible content and is
+       now almost square (1335x1337), so at 100% width it stands ~100vw tall.
+       Reserve exactly that, or the copy floats above a gap. */
+    background-size: min(100%, 460px) auto !important;
     background-position: 50% 100% !important;
-    padding-top: 40px !important;
-    padding-bottom: min(80vw, 340px) !important;
+    padding-top: 32px !important;
+    padding-bottom: calc(min(100vw, 460px) + 16px) !important;
   }
   /* The design's 48px floor stopped the headline shrinking below ~650px,
      which is what pushed "DEVELOPMENT" past the edge of the screen. */
@@ -190,8 +193,8 @@ main > div[style*="background-position:50% 60%"] {
   }
 }
 
-/* Tablet and up: artwork to the right, copy held clear of it. */
-@media (min-width: 768px) {
+/* Wide enough for the two to sit side by side. */
+@media (min-width: 900px) {
   main > div[style*="background-position:50% 60%"] {
     background-size: auto 72% !important;
     background-position: 94% 58% !important;
@@ -202,8 +205,17 @@ main > div[style*="background-position:50% 60%"] {
   }
 }
 
-/* Tablet only: at 768px the headline still reached into the artwork. */
-@media (min-width: 768px) and (max-width: 1023px) {
+/* 900-1199px: the cropped artwork is square, so it needs a smaller share
+   of the row than the old wide canvas did, or it lands on the copy. */
+@media (min-width: 900px) and (max-width: 1199px) {
+  main > div[style*="background-position:50% 60%"] {
+    background-size: auto 56% !important;
+    background-position: 100% 100% !important;
+  }
+  main > div[style*="background-position:50% 60%"] > h1,
+  main > div[style*="background-position:50% 60%"] > p {
+    max-width: 50% !important;
+  }
   main > div[style*="background-position:50% 60%"] > h1 {
     font-size: clamp(34px, 5.4vw, 52px) !important;
   }
