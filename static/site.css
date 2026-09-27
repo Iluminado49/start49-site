@@ -207,6 +207,23 @@ main > div[style*="background-position:50% 60%"] {
   }
 }
 
+/* Laptop and larger. The artwork is square, so its size is capped by
+   whichever runs out first - the width beside the copy, or the height of
+   the section. At 78vh the section was the binding constraint on a 14"
+   laptop, which is why the illustration looked small there. Give the
+   section more height and let the picture take it. */
+@media (min-width: 1200px) {
+  main > div[style*="background-position:50% 60%"] {
+    min-height: clamp(600px, 88vh, 920px) !important;
+    background-size: min(42%, 70vh, 700px) auto !important;
+    background-position: 100% 50% !important;
+  }
+  main > div[style*="background-position:50% 60%"] > h1,
+  main > div[style*="background-position:50% 60%"] > p {
+    max-width: min(50%, 720px) !important;
+  }
+}
+
 /* 900-1199px: the cropped artwork is square, so it needs a smaller share
    of the row than the old wide canvas did, or it lands on the copy. */
 @media (min-width: 900px) and (max-width: 1199px) {
