@@ -81,3 +81,51 @@
     }
   });
 })();
+
+/* Phone navigation: collapse the header links behind a burger button.
+   CSS hides #site-nav below 768px; this toggles .nav-open on the header. */
+
+(function () {
+  'use strict';
+
+  var header = document.querySelector('[data-site-header]');
+  if (!header) return;
+  var btn = header.querySelector('.nav-toggle');
+  var nav = header.querySelector('#site-nav');
+  if (!btn || !nav) return;
+
+  function setOpen(open) {
+    header.classList.toggle('nav-open', open);
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  }
+
+  btn.addEventListener('click', function () {
+    setOpen(!header.classList.contains('nav-open'));
+  });
+
+  /* Following a link closes the panel, including in-page anchors where no
+     navigation happens. */
+  nav.addEventListener('click', function (e) {
+    if (e.target.closest('a')) setOpen(false);
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && header.classList.contains('nav-open')) {
+      setOpen(false);
+      btn.focus();
+    }
+  });
+
+  /* Tapping the page behind the panel closes it. */
+  document.addEventListener('click', function (e) {
+    if (header.classList.contains('nav-open') && !header.contains(e.target)) {
+      setOpen(false);
+    }
+  });
+
+  /* Rotating to landscape can cross the breakpoint with the panel open. */
+  window.addEventListener('resize', function () {
+    if (window.innerWidth >= 768) setOpen(false);
+  });
+})();
