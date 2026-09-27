@@ -196,8 +196,10 @@ main > div[style*="background-position:50% 60%"] {
 /* Wide enough for the two to sit side by side. */
 @media (min-width: 900px) {
   main > div[style*="background-position:50% 60%"] {
-    background-size: auto 72% !important;
-    background-position: 94% 58% !important;
+    /* Width-based: `auto 72%` tied the artwork to the section height, so it
+       shrank on a short browser window. */
+    background-size: min(36%, 660px) auto !important;
+    background-position: 100% 55% !important;
   }
   main > div[style*="background-position:50% 60%"] > h1,
   main > div[style*="background-position:50% 60%"] > p {
@@ -209,7 +211,7 @@ main > div[style*="background-position:50% 60%"] {
    of the row than the old wide canvas did, or it lands on the copy. */
 @media (min-width: 900px) and (max-width: 1199px) {
   main > div[style*="background-position:50% 60%"] {
-    background-size: auto 56% !important;
+    background-size: 38% auto !important;
     background-position: 100% 100% !important;
   }
   main > div[style*="background-position:50% 60%"] > h1,
